@@ -28,7 +28,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 
 import objs.Configuration;
-import updater.Updater;
 
 public class TreeCapitator extends JavaPlugin implements Listener {
 	private PluginDescriptionFile desc = getDescription();
@@ -71,18 +70,6 @@ public class TreeCapitator extends JavaPlugin implements Listener {
 	// Metadata
 	private static final String PLAYER_ENABLE_META = "cristichi_treecap_meta_disable";
 
-	// Updater
-	private static final int ID = 294976;
-	private static Updater updater;
-	public static boolean update = false;
-
-	private boolean checkUpdate() {
-		updater = new Updater(this, ID, this.getFile(), Updater.UpdateType.NO_DOWNLOAD, false);
-		update = updater.getResult() == Updater.UpdateResult.UPDATE_AVAILABLE;
-
-		return update;
-	}
-
 	@Override
 	public void onEnable() {
 		wg = (WorldGuardPlugin) getServer().getPluginManager().getPlugin("WorldGuard");
@@ -92,13 +79,6 @@ public class TreeCapitator extends JavaPlugin implements Listener {
 			getLogger().info("WorldGuard found, extra protection enabled.");
 
 		getServer().getPluginManager().registerEvents(this, this);
-
-		if (checkUpdate()) {
-			getServer().getConsoleSender()
-					.sendMessage(header + ChatColor.GREEN
-							+ "An update is available, use /tc update to update to the lastest version (from v"
-							+ desc.getVersion() + " to v" + updater.getRemoteVersion() + ")");
-		}
 
 		config = new Configuration("plugins/CrisTreeCapitator/config.yml", "Cristichi's TreeCapitator");
 		loadConfiguration();
@@ -253,7 +233,7 @@ public class TreeCapitator extends JavaPlugin implements Listener {
 		if ((wg != null && !wg.createProtectionQuery().testBlockBreak(player, lego)) || stop)
 			return destroyed;
 		Material material = lego.getBlockData().getMaterial();
-		if (isLog(material) || isLeaves(material)) {
+		if (isLog(material)) {
 			if (destroyed > maxBlocks && maxBlocks > 0) {
 				return destroyed;
 			}
@@ -302,7 +282,7 @@ public class TreeCapitator extends JavaPlugin implements Listener {
 		if ((wg != null && !wg.createProtectionQuery().testBlockBreak(player, lego)) || stop)
 			return destroyed;
 		Material material = lego.getBlockData().getMaterial();
-		if (isLog(material) || isLeaves(material)) {
+		if (isLog(material)) {
 			if (maxBlocks > 0 && destroyed > maxBlocks) {
 				return destroyed;
 			}
@@ -845,23 +825,6 @@ public class TreeCapitator extends JavaPlugin implements Listener {
 
 					break;
 
-				case "update":
-					if (sender.hasPermission("cristreecapitator.admin")) {
-						if (checkUpdate()) {
-							sender.sendMessage(header + "Updating CrisTreeCapitator...");
-							updater = new Updater(this, ID, this.getFile(), Updater.UpdateType.DEFAULT, true);
-							updater.getResult();
-							sender.sendMessage(
-									header + "Use " + accentColor + "/reload" + textColor + " to apply changes.");
-						} else {
-							sender.sendMessage(header + "This plugin is already up to date.");
-						}
-					} else {
-						sinPermiso = true;
-					}
-
-					break;
-
 				default:
 					sender.sendMessage(
 							header + errorColor + "Command not found, please check \"/" + label + " help\".");
@@ -919,11 +882,4 @@ public class TreeCapitator extends JavaPlugin implements Listener {
 		return ret;
 	}
 
-	private boolean isLeaves(Material mat) {
-		boolean ret = mat.name().contains("LEAVES");
-		if (!ret && admitNetherTrees)
-			return ret || mat.name().equals("NETHER_WART_BLOCK") || mat.name().equals("WARPED_WART_BLOCK")
-					|| mat.name().equals("SHROOMLIGHT");
-		return ret;
-	}
 }
